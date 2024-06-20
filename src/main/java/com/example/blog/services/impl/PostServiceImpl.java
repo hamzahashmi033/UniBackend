@@ -5,12 +5,16 @@ import com.example.blog.entity.Post;
 import com.example.blog.entity.User;
 import com.example.blog.exceptions.ResourceNotFoundException;
 import com.example.blog.payloads.PostDto;
+import com.example.blog.payloads.PostResponse;
 import com.example.blog.repositories.CategoryRepo;
 import com.example.blog.repositories.PostRepo;
 import com.example.blog.repositories.UserRepo;
 import com.example.blog.services.PostService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -44,8 +48,20 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public Post updatePost(PostDto postDto, Integer postId) {
-        return null;
+    public PostDto updatePost(PostDto postDto, Integer postId) {
+        Post post = this.postRepo.findById(postId).orElseThrow(() -> new ResourceNotFoundException("Post", "post id", postId));
+
+        // Update the fields of the post
+        post.setTitle(postDto.getTitle());
+        post.setContent(postDto.getContent());
+        post.setImageName(postDto.getImageName());
+        post.setCreatedAt(new Date()); // Assuming you have an updatedAt field
+
+        // Save the updated post
+        Post updatedPost = this.postRepo.save(post);
+
+        // Convert the updated post to PostDto and return
+        return this.modelMapper.map(updatedPost, PostDto.class);
     }
 
     @Override
@@ -55,11 +71,22 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public List<PostDto> getAllPost() {
-        List<Post> posts = this.postRepo.findAll();
-        return posts.stream()
+    public PostResponse getAllPost(Integer pageNumber, Integer pageSize) {
+        Pageable p = PageRequest.of(pageNumber,pageSize);
+        Page<Post> pagePosts = this.postRepo.findAll(p);
+        List<Post> posts = pagePosts.getContent();
+        List<PostDto> postDtos = posts.stream()
                 .map(post -> this.modelMapper.map(post, PostDto.class))
                 .collect(Collectors.toList());
+        PostResponse postResponse= new  PostResponse();
+        postResponse.setContent(postDtos);
+        postResponse.setPageNumber(pagePosts.getNumber());
+        postResponse.setPageSize(pagePosts.getSize());
+        postResponse.setTotalElements(pagePosts.getTotalElements());
+        postResponse.setTotalPages(pagePosts.getTotalPages());
+        postResponse.setLastPage((pagePosts.isLast()));
+        return  postResponse;
+
     }
 
     @Override
