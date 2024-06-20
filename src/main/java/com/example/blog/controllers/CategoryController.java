@@ -1,8 +1,8 @@
 package com.example.blog.controllers;
 
 import com.example.blog.payloads.CategoryDto;
-import com.example.blog.payloads.UserDto;
 import com.example.blog.services.CategoryService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +18,7 @@ public class CategoryController {
     private CategoryService categoryService;
     //    create
     @PostMapping("/")
-    public ResponseEntity<CategoryDto> createCategory(@RequestBody CategoryDto categoryDto){
+    public ResponseEntity<CategoryDto> createCategory(@Valid @RequestBody CategoryDto categoryDto){
         CategoryDto createdCategory = this.categoryService.createCategory(categoryDto);
         return new ResponseEntity<CategoryDto>(createdCategory, HttpStatus.CREATED);
     }
